@@ -1,0 +1,20 @@
+了解高级搜索语法
+
+https://help.github.com/en/github/searching-for-information-on-github/understanding-the-search-syntax
+
+AND mysql NOT (127.0.0.1) NOT localhost sort:committer-date-desc
+oppo created:>2019-04-29
+oppo in:file AND mysql AND 3306 AND jdbc AND (extension:properties OR extension:yml) NOT localhost
+oppo in:file AND mysql AND 3306  AND (extension:properties OR extension:yml) NOT (127.0.0.1) NOT localhost  --最多用5个表达式，官网
+
+oppo AND mysql NOT (127.0.0.1) NOT localhost
+
+
+https://help.github.com/en/github/searching-for-information-on-github/searching-code
+您不能在搜索查询中使用以下通配符：. , : ; / \ ` ' " = * ! ? # $ & + ^ | ~ < > ( ) { } [ ]。搜索将仅忽略这些符号。
+
+查询长度限制
+Search API不支持以下查询：
+
+长度超过256个字符（不包括运算符或限定符）。
+有五个以上的AND，OR或NOT运营商。
