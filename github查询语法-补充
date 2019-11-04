@@ -1,6 +1,9 @@
 了解高级搜索语法
 
 https://help.github.com/en/github/searching-for-information-on-github/understanding-the-search-syntax
+1、cats created:>2016-04-29 ---Query for dates无法生效；
+2、Use quotation marks for queries with whitespace----不止空格，其他的也行，例如huawei.xyz！！！
+
 
 AND mysql NOT (127.0.0.1) NOT localhost sort:committer-date-desc
 oppo created:>2019-04-29
