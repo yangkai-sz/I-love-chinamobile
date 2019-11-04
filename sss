@@ -2,3 +2,9 @@ ssssfdafa
 jdbc.properties ;;
 vivo in:file AND mysql AND 3306 AND jdbc NOT localhost
 https://blog.csdn.net/xpx1995/article/details/7903139
+
+
+vivo in:file AND mysql AND 3306 AND jdbc AND (extension:properties OR extension:properties) NOT localhost
+vivo in:file AND mysql AND 3306  AND (extension:properties OR extension:properties) NOT (127.0.0.1) NOT localhost  --最多用7个表达式
+
+vivo AND mysql NOT (127.0.0.1) NOT localhost
