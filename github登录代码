@@ -1,1 +1,8 @@
+参考这篇文章登陆：
 https://blog.csdn.net/weixin_45112822/article/details/91910480
+有authenticity_token，提升安全性，会写入cookie里，生产session。同时github这个网站，每个修改post操作，都会带有authenticity_token，
+可以有效防范CSRF攻击！通过burp抓包可以看到，打开一个页面，就会带有token，你提交的时候就得带上这个、cookie以及提交的body信息。
+
+result1 = html_get.xpath('//div[@class="f4 text-normal"]/a/text()')  #list
+result2 = html_get.xpath('//div[@class="f4 text-normal"]/a/@href')   #list
+headers_json = {"Content-Type": "application/json"}
