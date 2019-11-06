@@ -21,3 +21,5 @@ Search API不支持以下查询：
 
 长度超过256个字符（不包括运算符或限定符）。
 有五个以上的AND，OR或NOT运营商。
+AND mysql NOT (127.0.0.1) NOT localhost sort:committer-date-desc
+created:>2019-04-29 "huawei.xyz" AND mysql AND 3306  AND (extension:properties OR extension:yml) NOT (127.0.0.1) NOT localhost
