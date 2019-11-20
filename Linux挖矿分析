@@ -1,0 +1,10 @@
+https://blog.csdn.net/qq_31457413/article/details/98942964
+
+https://www.freebuf.com/vuls/200289.html
+
+https://www.virustotal.com/gui/file/815516167d2170997d6674190028f86854984749760600fb95c711f74c98da13/detection
+特征一般都是cpu占用高，有常见的病毒名称，可以做检测。如果找不到占用cpu高的进程，那么可能是中rootkit了。
+检查进程、异常文件（find最近7天的）、检查定时任务（crontab、rc.local)、最近登陆、命令历史。
+
+4、病毒传播及生存原理
+通过ssh暴力破解，U盘等物理介质，sql注入等形式将病毒源文件传播到服务器中，并以脚本，定时任务，自启动服务形式，执行挖矿程序，且kill之后能够再次启动。
