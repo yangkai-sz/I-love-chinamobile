@@ -1,0 +1,170 @@
+logstash的配置，支持正则，还可以切割，还支持正则表达式（太麻烦了、性能也不好），这里写得应该算最权威的，但是有些内容不够详细：https://elkguide.elasticsearch.cn/logstash/
+要切割字符串：
+[4408 4259 11091180 2019-07-24 16:15:02.890943 info]: cmdb认证成功！
+[4408 4259 11091180 2019-07-24 16:19:12.863832 info]: username:张三 client: asset:110.12.2.26 cmd:free -h
+
+[3201 2665 11090991 2019-07-24 16:22:35.526148 info]: username:张三 client: asset:110.30.6.10 cmd:mesug_2.1.0&keyword=大道争"
+
+[3201 2665 11090991 2019-07-24 16:23:01.587848 info]: username:张三 client: asset:110.30.6.10 cmd:ug_2.1.0&keyword=qq"12
+
+
+input {
+    file {
+        path => ["/opt/ykai/jumper/jump-log/test.log"]
+        start_position => "beginning"
+        tags => ["add"]
+        type => "jump1"
+        sincedb_path=> "/opt/es/sincedb.txt"
+    }
+}
+
+filter {
+    if "asset" in [message]{
+        mutate {
+            split => ["message","cmd:"]
+        }
+        if [message][1] {
+            mutate {
+                add_field =>   { "log_cmd" => "%{[message][1]}"}
+            }
+        }
+        mutate {
+            join => ["message", "cmd:"]
+        }
+        mutate {
+            split => ["message"," "]
+        }
+
+        if [message][2] {
+            mutate {
+                add_field =>   {"log_operator" => "%{[message][2]}"}
+            }
+        }
+
+        if [message][3] {
+            mutate {
+                add_field =>   {"temp1" => "%{[message][3]}"}
+            }
+        }
+
+        if [message][4] {
+            mutate {
+                add_field =>   {"temp2" => "%{[message][4]}"}
+            }
+        }
+        if [message][4] {
+            mutate {
+                replace =>   {"log_time" => "%{temp1} %{temp2}"}
+            }
+        }
+        if [log_time] {
+            date{
+                match => ["log_time", "yyyy-MM-dd HH:mm:ss.SSSSSS"]
+                target => "@timestamp"
+            }
+        }
+        if [message][8] {
+            mutate {
+                add_field =>   {"asset" => "%{[message][8]}"}
+            }
+        }
+        if [message][8] {
+            mutate {
+                split => ["asset", ":"]
+                add_field =>   { "log_daddr" => "%{[asset][1]}"}
+                remove_field => [ "temp1", "temp2", "asset", "message" ]
+            }
+        }
+        fingerprint{
+            source => ["log_time","log_cmd","log_operator","log_daddr"]
+            target => "[@metadata][fingerprint]"
+            method => "SHA1"
+            base64encode => true
+            concatenate_sources => true
+        }
+        mutate { add_field => {"data" => "yes"}}
+        mutate { add_field => {"warning_event" => "default"}}
+        mutate { add_field => {"warning_rank" => "default"}}
+        mutate { add_field => {"audit_obj_type" => "default"}}
+    }
+    else {
+        mutate {split => ["message"," "]}
+
+        if [message][2] {
+            mutate {
+                add_field =>   {"log_operator" => "%{[message][2]}"}
+            }
+        }
+        else {
+            mutate {
+                add_field =>   {"log_operator" => "not_match"}
+            }
+        }
+        if [message][3] {
+            mutate {
+                add_field =>   {"temp1" => "%{[message][3]}"}
+            }
+        }
+        if [message][4] {
+            mutate {
+                add_field =>   { "temp2" => "%{[message][4]}"}
+            }
+        }
+        if [temp2] {
+            mutate {
+                split => ["temp2", "]"]
+                add_field => {"temp3" => "%{[temp2][0]}"}
+            }
+        } 
+        if [temp3] {
+            mutate {
+                replace =>   {"log_time" => "%{temp1} %{temp3}"}
+                remove_field => ["temp1", "temp2", "temp3"]
+            }
+        }
+        if [log_time] {
+             date{
+                match => ["log_time", "yyyy-MM-dd HH:mm:ss.SSSSSS"]
+                target => "@timestamp"
+            }
+        }        
+        mutate {
+            join => ["message", " "]
+        }
+        mutate {
+            split => ["message","]: "]
+        }
+
+        if [message][1] {
+            mutate {
+                add_field => {"data" => "%{[message][1]}"}
+                remove_field => ["message"]
+            }
+        }
+        else {
+            mutate {
+                add_field => {"data" => "%{[message]}"}
+                remove_field => ["message"]
+            }
+        }
+        fingerprint{
+            source => ["log_time","log_operator"]
+            target => "[@metadata][fingerprint]"
+            method => "SHA1"
+            base64encode => true
+            concatenate_sources => true
+        }        
+        mutate { add_field => {"log_cmd" => "no"} }
+        mutate { add_field => {"warning_event" => "default"}}
+        mutate { add_field => {"warning_rank" => "default"}}
+        mutate { add_field => {"audit_obj_type" => "default"}}
+    }
+}
+
+output {
+    elasticsearch {
+        hosts => ["192.2.126.141:9200"]
+        index => "jumper-log-%{type}-%{+YYYY.MM}"
+        document_id => "%{[@metadata][fingerprint]}"
+    }
+}
