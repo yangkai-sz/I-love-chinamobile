@@ -1,0 +1,493 @@
+query	bool must filter must_not should	match match_all match_phrase term terms cardwild prefix regex 	constant_score	range @timestamp gte lte format yyyy-MM-dd time_zone +08:00
+
+agg!!!
+
+流式计算，就相当于原来先生存文件，然后脚本处理，而现在生成文件的时候直接处理了，比如用logstash实时监听、处理。
+(1) 流式计算流程
+
+① 提交流计算作业。
+
+② 等待流式数据触发流计算作业。
+
+③ 计算结果持续不断对外写出。
+
+(2) 流式计算特点
+
+① 实时、低延迟
+
+② 无界，数据是不断无终止的
+
+③ 连续，计算持续进行，计算完之后数据即丢弃
+
+GB/T 33561-2017	《信息安全技术 安全漏洞分类》
+RPO 是衡量灾难发生后会丢失多少生产数据的指标。可简单的描述为设施能容忍的最大数据丢失量。
+RTO：（RecoveryTime Object）是指灾难发生后，从IT系统宕机导致业务停顿之刻开始，到IT系统恢复至可以支持各部门运作，业务恢复运营之时，此两点之间的时间段称为RTO
+应急预案是针对系统的，可以是多个系统，要做bia和风评，而应急演练是针对某个系统基于具体的场景的；应急预案也不能是通用的，不同系统的风评、bia结果不同。
+
+
+GET _search
+{"query": {
+"match": {
+"log_operator": {
+"query": "user03"
+}
+}
+}
+}
+
+get index1,index2/_search
+
+GET mysql-log*2019.08*/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {"term": {
+          "log_operator.keyword": {
+            "value": "oper01"
+          }
+        }}
+      ],"must_not": [
+        {"term": {
+          "warning_rank": {
+            "value": "no"
+          }
+        }}
+      ]
+    }
+  },"_source": ["log_operator","log_cmd","log_time","log_daddr","log_saddr"]
+}
+
+GET jumper-log-jump1-2019.07/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+GET mysql-log*/_search
+{"query":{"bool":{"must":[{"match":{"obj_type":"mysql"}},{"range":{"log_time":{"gte":"2019-08-01 09:50:44","lte":"2019-08-02 09:50:44"}}}]}}}
+
+"format":"yyyy-MM-dd","time_zone":"+08:00"
+
+GET mysql-log*/_search?_source=log_cmd,log_time,log_daddr,@timestamp
+{
+  "size": 20, 
+	"query": {
+		"bool": {
+			"filter": [{
+				"term": {
+					"obj_type": "mysql"
+				}
+			},{
+				"range": {
+					"@timestamp": {
+						"gte": "2019-07-30T16:00:00.000Z",
+						"lte": "2019-08-06T16:00:00.000Z"
+					}
+				}
+			}],
+			"must_not": [
+			  {"match": {
+			    "warning_event": "no"
+			  }}
+			]
+		}
+	}
+}
+
+GET mysql-log*/_search?_source=log_cmd
+{
+  "query": {
+"constant_score":{
+      "filter": {
+        "term": {
+          "log_operator.keyword": "110991111111"
+        }
+      }
+    }
+  }
+}
+
+GET mysql-log*/_search?_source=log_cmd
+{
+    "query" : {
+        "bool" : { 
+            "filter" : {
+                "term" : { 
+                    "log_operator" :"110199115511"
+                }
+            }
+        }
+    }
+}
+GET mysql*2019.08*/_search
+{
+  "query": {"bool":
+  {"must":[{"match": {
+    "log_cmd": {
+      "query": "sz .sql",
+      "operator": "and"
+    }
+  }}
+  ]
+  }},"_source": ["log_cmd","log_operator","log_time","log_daddr"],"size": 20
+}
+
+发现全部查询出来，为什么？因为terms里的[ ] 多个是或者的关系，只要满足其中一个词就可以。想要通知满足两个词的话，就得使用bool的must来做。
+
+GET mysql*2019.08*/_search
+{
+  "query": {"bool":
+  {"must":[{"terms": {
+    "log_cmd":  ["sz", "dfa.tar.gz"]
+    }
+  }
+  ]
+  }},"_source": ["log_cmd","log_operator","log_time","log_daddr"],"size": 20
+}
+
+GET mysql*2019.08*/_search
+{
+  "query": {"terms": {
+    "log_cmd.keyword":  ["sz", "dfa.tar.gz"]
+    }
+  }
+  
+  ,"_source": ["log_cmd","log_operator","log_time","log_daddr"],"size": 20
+}
+
+GET mysql*2019.08*/_search
+{
+  "query": {"bool":
+  {"must":[{"match_phrase": {
+    "log_cmd":  "sz dfa.tar.gz"
+    }
+  }
+  ]
+  }},"_source": ["log_cmd","log_operator","log_time","log_daddr"],"size": 20
+}
+GET mysql-log-fort_log-2019.08/_analyze
+{
+  "field": "log_cmd",
+  "text": ["sz -a comsearch_predict_result_2000.txt"]
+}
+
+
+GET mysql*2019.08/_search
+{
+  "query": {"bool":
+  {"must":[{"prefix": {
+    "log_cmd":  "mysqldu"
+    }
+  }
+  ]
+  }},"_source": ["log_cmd","log_operator","log_time","log_daddr"],"size": 200
+}
+
+GET mysql-log-fort_log-2019.08/_analyze
+{
+  "field": "log_cmd",
+  "text": ["less mysql-slow.log"]
+}
+
+
+GET mysql-log-fort_log-2019.08/_search
+{"query": {
+  "match_all": {}
+}, "_source": ["_index"]}
+
+POST logstash-fort_log-2019*/_close
+POST logtash-yunxiangce*/_close
+POST logstash-fort_log-2017.12.31/_close
+POST py-logstash-fort_log-2019*/_close
+POST log
+#DELETE mysql-log-fort_log-2019.08
+
+GET mysql-log-fort_log-2019.08/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "term": {
+          "log_cmd": "sz"
+        }
+      },"must_not": [
+        {"term": {
+          "warning_event": {
+            "value": "no"
+          }
+        }}
+      ]
+    }
+  },"_source": ["log_cmd"]
+}
+
+
+GET mysql-log-fort_log-2019.08/_search
+{
+    "query":{
+        "bool":{
+            "filter":{
+                "term":{
+                    "log_cmd":"sz"
+                }
+            },
+            "must":{
+                "term":{
+                    "warning_event":"no"
+                }
+            }
+        }
+    },
+    "_source":[
+        "log_cmd"
+    ],
+    "size":20
+}
+
+#"filter":[{"term":{}},{"term":{}}]，多个filter并行查询。
+
+GET mysql-log-fort_log-2019.08/_search
+{
+    "query":{
+        "bool":{
+            "filter":[{
+                "term":{
+                    "log_cmd":"sz"
+                }
+            },
+            {
+                "term":{
+                    "warning_rank":"3"
+                }
+            }],"must": [
+              {"term": {
+                "log_cmd.keyword": "sz"
+              }}
+            ]
+        }
+    },
+    "_source":[
+        "log_cmd"
+    ],
+    "size":500
+}
+
+GET mysql-log-fort_log-2019.08/_search
+{
+    "query":{
+        "bool":{
+            "must_not":[
+            {
+                "term":{
+                    "warning_rank":"3"
+                }
+            }],"must": [
+              {"term": {
+                "log_cmd.keyword": "sz"
+              }}
+            ]
+        }
+    },
+    "size":500
+}
+
+GET mysql-log-fort_log-2019.08/_search
+{
+    "query":{
+        "bool":{
+            "filter":[{
+                "term":{
+                    "log_cmd":"sz"
+                }
+            },
+            {
+                "term":{
+                    "warning_event":"no"
+                }
+            }],"must_not": [
+              {"term": {
+                "log_cmd.keyword": "sz"
+              }}
+            ]
+        }
+    },
+    "_source":[
+        "log_cmd"
+    ],
+    "size":500
+}
+
+GET mysql-log-fort_log-2019.08/_search
+{
+  "query": {
+    "bool": {
+      "filter": {
+        "term": {
+          "log_cmd": "csv"
+        }
+
+      }
+    }
+  },"_source": ["log_cmd"]
+}
+#warning_event 就不对
+
+
+GET mysql-log-fort_log-2019.08/_search
+{
+  "query": {
+    "bool": {
+      "must": {
+        "match": {
+          "warning_event": {"query":"file download",
+          "type":"phrase"}
+        }
+
+      }
+    }
+  }
+}
+
+-----多了个query
+        "match": {
+          "warning_event":"file download",
+          "type":"phrase"}
+
+GET mysql-log-fort_log-2019.08/_search
+{
+  "query": {
+    "match_phrase": {
+      "warning_event": {
+        "query": "disk format"
+      }
+    }
+  }
+}
+GET mysql-log-fort_log-2019.08/doc/1Sefe2ICK9h%2Bljbba0hUpB6aByI%3D
+
+# _update的时候，doc是核心，注意语法！
+
+POST jumper-log-jump1-2019.07/doc/ninDVW9cFtlzmNcp9FiGtANRPa8=/_update	——————————————————————要用url编码，parse.quote_plus()
+{
+  "doc": {"warning_rank": "1", "warning_event": "file download"}
+}
+
+GET jumper-log-jump1-2019.07/doc/+LVkoOGbEU2X3ALNMKunWdqL/08=
+
+GET jumper-log-jump1-2019.07/doc/ninDVW9cFtlzmNcp9FiGtANRPa8=
+
+
+GET mysql-log-fort_log-2019.08/_search
+ {
+"size": 9,"_source": ["log_daddr"], 
+    "query": {
+        "bool": {
+            "filter": [{
+                "term": {
+                    "obj_type": "mysql"
+                }
+            },{
+                "range": {
+                    "@timestamp": {
+                        "gte": "2019-08-21",
+                        "lte": "2019-08-27",
+                        "format":"yyyy-MM-dd",
+                        "time_zone":"+08:00"
+                    }
+                }
+            }],
+            "must_not": [
+              {"match": {
+                "warning_event": "no"
+              }}
+            ]
+        }
+    }
+}
+========================
+es 中怎么根据查询条件删除数据 15C
+可以通过delete_by_query对要删除的doc进行条件过滤，具体语法如下：
+POST {index}/_delete_by_query
+{
+"query": {
+"match": {
+"message": "some message"
+}
+}
+}
+
+在版本2.X之后，delete_by_query被弃用，直接用delete就行：-----不是的
+
+DELETE {index}/{type}/_query
+{
+"query": {
+"match_all": {}
+}
+}
+===================
+POST jumper-log-jump1-2019.07/_delete_by_query
+{
+  "query":{
+    "match": {
+      "warning_event.keyword": "file download"
+    }
+  }
+}
+得这样子，delete是直接删除索引的；
+post数据得加上type名字，如：
+POST shenzhen/_doc
+{
+"log_saddr": "172.26.19.17",
+"log_daddr": "10.21.18.52",
+"log_cmd": "FROM",
+"obj_type": "host",
+"log_operator": "11105994",
+"warning_event": "no",
+"log_time": "2019-08-16 10:32:50",
+"warning_rank": "no"
+}
+
+
+
+https://www.cnblogs.com/leeSmall/p/9220535.html  关于集群的介绍，这个写的最好了、
+
+https://www.cnblogs.com/leeSmall/p/9189078.html
+速度快、易扩展、弹性、灵活、操作简单、多语言客户端、X-Pack、hadoop/spark强强联手、开箱即用。
+
+
+因为logstash比较耗内存，所以用Beats来替代
+
+
+Beats是用于单用途数据托运人的平台。它们以轻量级代理的形式安装，并将来自成百上千台机器的数据发送到Logstash或Elasticsearch。
+
+（画外音：通俗地理解，就是采集数据，并上报到Logstash或Elasticsearch）
+
+Beats对于收集数据非常有用。它们位于你的服务器上，将数据集中在Elasticsearch中，Beats也可以发送到Logstash来进行转换和解析。
+
+为了捕捉（捕获）数据，Elastic提供了各种Beats
+
+===============================================================
+许多 API 看起来很熟悉了 ( 是的，顶上还有一只猫:) )。让我们看看 cat 的健康检查 API：
+
+GET /_cat/health
+
+1408723713 12:08:33 elasticsearch_zach yellow 1 1 114 114 0 0 114
+首先你会注意到的是响应是表格样式的纯文本，而不是 JSON。其次你会注意到各列默认是没有表头的。这都是模仿 *nix 工具设计的，因为它假设一旦你对输出熟悉了，你就再也不想看见表头了。
+
+要启用表头，添加 ?v 参数即可：
+
+GET /_cat/health?v
+
+从这里，不知道密钥是无法知道这里传输的是什么数据，连传输的是什么协议的内容都不知道。
+
+所以之前创建 SSL 隧道，让代理服务器盲传 HTTPS 数据，就得通过 CONNECT 方法告诉代理服务器要连哪台主机，哪个端口号，要不然代理服务器也是一脸懵逼。
+
+所以 SSL 协议是很独立的，这里是对 HTTP 进行了加密，也可以对其他协议进行加密。它就像是 TCP 和应用层协议的中间层，为上层协议提供了加密的数据传输。
+————————————————
+版权声明：本文为CSDN博主「Oblee」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/firefile/article/details/80537053
+
+请求头、请求体，响应头、响应体
+
