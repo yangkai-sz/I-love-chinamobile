@@ -1,0 +1,281 @@
+打开es官网，学习——文档，该路径下很多资料https://www.elastic.co/guide/index.html。有中文的，但比较老一点：https://www.elastic.co/guide/cn/index.html
+英文的，各个版本都有，用谷歌在线翻译很方便：https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html
+这个网站也不是特别靠谱，有段时间，在下载elk相关版本安装包的时候，都不能搜索，只能翻页去找，过了一段时间问题修复了。
+====================================================
+1、被混淆的概念是，一个 Lucene 索引 我们在 Elasticsearch 称作 分片 。 一个 Elasticsearch 索引 是分片的集合。
+
+2、DSL查询之match、term、filter-term
+query-term，	filter-term，	query-match 分词、模糊匹配分词；如果只查询一个词，则根据最佳实践用filter，如果查询多个词则用match或者bool查询里两个term。
+例如{"match":{"log_cmd":"sz sql","operator":"and"}},效果等于{"must":[{"term":{"log_cmd":"sz"}}，{"term":{"log_cmd":"sql"}}]}，也可以用filter。但是这个时候不能用{"term":{"log_cmd":"sz sql"}}，这样什么都查不出来，因为log_cmd被analysis了，肯定不存在“sz sql”这样的词（如果有，也被分成了“sz”，“sql”这样子。term是完全匹配，所以匹配不到。
+（match在匹配时会对所查找的关键词进行分词，然后按分词匹配查找，而term会直接对关键词进行查找，如果你这个“关键词”满足分词规则的，那么还在analysis的字段上查询，什么也查不出来。一般模糊查找的时候，多用match，而精确查找时可以使用term。）一般term用于keyword、number、日期字段，对于analysis字段，可以用filter term来查询。
+https://blog.csdn.net/tclzsn7456/article/details/79956625      ES中match和term差别对比
+term级别查询将按照存储在倒排索引中的确切字词进行操作，这些查询通常用于数字，日期和枚举等结构化数据，而不是全文本字段。
+
+3、match_phrase 称为短语搜索，要求所有的分词必须同时出现在文档中，同时位置必须紧邻一致。可以用match加上type:phrase。————现在已经不支持了
+
+4、当进行精确值查找时， 我们会使用过滤器（filters-term）。过滤器很重要，因为它们执行速度非常快，不会计算相关度（直接跳过了整个评分阶段）而且很容易被缓存。我们会在本章后面的 过滤器缓存 中讨论过滤器的性能优势，不过现在只要记住：请尽可能多的使用过滤式查询。
+
+5、将查询的字符串 QUICK! 传入标准分析器中，输出的结果是单个项 quick 。因为只有一个单词项，所以 match 查询执行的是单个底层 term 查询。————精度
+https://www.elastic.co/guide/cn/elasticsearch/guide/cn/match-query.html
+6、
+{
+  "query": {
+    "match": {
+      "title": {
+        "query":                "quick brown dog",
+        "minimum_should_match": "75%"
+      }
+    }
+  }
+}
+所有 must 语句必须匹配，所有 must_not 语句都必须不匹配，但有多少 should 语句应该匹配呢？ 默认情况下，没有 should 语句是必须匹配的，只有一个例外：那就是当没有 must 语句的时候，至少有一个 should 语句必须匹配。
+就像我们能控制 match 查询的精度 一样，我们可以通过 minimum_should_match 参数控制需要匹配的 should 语句的数量， 它既可以是一个绝对的数字，又可以是个百分比：
+目前为止，可能已经意识到多词 match 查询只是简单地将生成的 term 查询包裹 在一个 bool 查询中。如果使用默认的 or 操作符，每个 term 查询都被当作 should 语句，这样就要求必须至少匹配一条语句。以下两个查询是等价的：
+{
+    "match": { "title": "brown fox"}
+}
+{
+  "bool": {
+    "should": [
+      { "term": { "title": "brown" }},
+      { "term": { "title": "fox"   }}
+    ]
+  }
+}
+
+should 语句匹配得越多表示文档的相关度越高。目前为止还挺好。但是如果我们想让包含 Lucene 的有更高的权重，并且包含 Elasticsearch 的语句比 Lucene 的权重更高，该如何处理?should match boost。我们可以通过指定 boost 来控制任何查询语句的相对的权重， boost 的默认值为 1 ，大于 1 会提升一个语句的相对权重。
+boost 参数被用来提升一个语句的相对权重（ boost 值大于 1 ）或降低相对权重（ boost 值处于 0 到 1 之间），但是这种提升或降低并不是线性的，换句话说，如果一个 boost 值为 2 ，并不能获得两倍的评分 _score 。
+
+相反，新的评分 _score 会在应用权重提升之后被 归一化 ，每种类型的查询都有自己的归一算法，细节超出了本书的范围，所以不作介绍。简单的说，更高的 boost 值为我们带来更高的评分 _score 。
+
+
+佳华考核表。
+搜索战争与和平，再加上should，如果作者匹配到了，则文档得分更高。
+GET /_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        { "match": { "title":  "War and Peace" }},
+        { "match": { "author": "Leo Tolstoy"   }},
+        { "bool":  {
+          "should": [
+            { "match": { "translator": "Constance Garnett" }},
+            { "match": { "translator": "Louise Maude"      }}
+          ]
+        }}
+      ]
+    }
+  }
+}
+拷贝为 cURL在 Sense 中查看 
+为什么将译者条件语句放入另一个独立的 bool 查询中呢？所有的四个 match 查询都是 should 语句，所以为什么不将 translator 语句与其他如 title 、 author 这样的语句放在同一层呢？
+
+答案在于评分的计算方式。 bool 查询运行每个 match 查询，再把评分加在一起，然后将结果与所有匹配的语句数量相乘，最后除以所有的语句数量。！！！！====处于同一层的每条语句具有相同的权重=====！！！。在前面这个例子中，包含 translator 语句的 bool 查询，只占总评分的三分之一。如果将 translator 语句与 title 和 author 两条语句放入同一层，那么 title 和 author 语句只贡献四分之一评分。
+
+最佳字段、最佳评分，dis_max;
+tie_breaker 参数提供了一种 dis_max 和 bool 之间的折中选择，它的评分方式如下：
+
+获得最佳匹配语句的评分 _score 。
+将其他匹配语句的评分结果与 tie_breaker 相乘。
+对以上评分求和并规范化。
+有了 tie_breaker ，会考虑所有匹配语句，但最佳匹配语句依然占最终结果里的很大一部分。
+
+注意
+tie_breaker 可以是 0 到 1 之间的浮点数，其中 0 代表使用 dis_max 最佳匹配语句的普通逻辑， 1 表示所有匹配语句同等重要。最佳的精确值需要根据数据与查询调试得出，但是合理值应该与零接近（处于 0.1 - 0.4 之间），这样就不会颠覆 dis_max 最佳匹配性质的根本。
+English分词器、standard分词器。
+
+就像 match 查询对于标准全文检索是一种最常用的查询一样，当你想找到彼此邻近搜索词的查询方法时，就会想到 match_phrase 查询 。
+GET /my_index/my_type/_search
+{
+    "query": {
+        "match_phrase": {
+            "title": "quick brown fox"
+        }
+    }
+}
+match_phrase 查询同样可写成一种类型为 phrase 的 match 查询:（kibana的discover界面就是这样子的），但在开发界面就不支持这个语法了。
+
+"match": {
+    "title": {
+        "query": "quick brown fox",
+        "type":  "phrase"
+    }
+}
+如果设置查询间隔：
+GET /my_index/my_type/_search
+{
+    "query": {
+        "match_phrase": {
+            "title":{"query": "quick brown fox","slop":2}  #2就是间隔。
+        }
+    }
+}
+
+prifix：{filed:value}  前缀匹配，开销比较大。wildcard 通配符查询也是一种底层基于词的查询， 与前缀查询不同的是它允许指定匹配的正则式。它使用标准的 shell 通配符查询： ? 匹配任意字符， * 匹配 0 或多个字符。————适合针对not_analysis的。 
+wildcard 和 regexp 查询的工作方式与 prefix 查询完全一样，它们也需要扫描倒排索引中的词列表才能找到所有匹配的词，然后依次获取每个词相关的文档 ID ，与 prefix 查询的唯一不同是：它们能支持更为复杂的匹配模式。
+
+这也意味着需要同样注意前缀查询存在性能问题，对有很多唯一词的字段执行这些查询可能会消耗非常多的资源，所以要避免使用左通配这样的模式匹配（如： *foo 或 .*foo 这样的正则式）。
+
+在互联网上搜索 “Apple”，返回的结果很可能是一个公司、水果和各种食谱。 我们可以在 bool 查询中用 must_not 语句来排除像 pie 、 tart 、 crumble 和 tree 这样的词，从而将查询结果的范围缩小至只返回与 “Apple” （苹果）公司相关的结果：
+
+怎么修改权重？boost、修改层级！！！
+
+from urllib import parse
+import requests
+import json
+headers = {"Content-Type": "application/json"}
+url = 'http://127.0.0.1:9200/mysql*/_search'
+data = {
+    "query":{
+        "bool":{
+            "filter":{
+                "term":{
+                    "log_cmd":"sz"
+                }
+            },
+            "must":{
+                "term":{
+                    "warning_event":"no"
+                }
+            }
+        }
+    },
+    "_source":[
+        "log_cmd"
+    ],
+    "size":100
+}
+data = json.dumps(data)
+res = requests.post(url, data, headers=headers)
+res = res.json()
+print(type(res))  #dict
+#print(res['time_out'])    #这个就会报错
+list_index = res['hits']['hits']
+print(list_index)
+print('-----------upset-------------------')
+data_upset = {
+  "doc": {"warning_rank": "3", "warning_event": "file download"}
+  }
+data_upset = json.dumps(data_upset)
+for i in list_index:
+    _id = parse.quote_plus(i['_id'])
+    url_update = 'http://127.0.0.1:9200/mysql*/doc/'
+    url_update = url_update+_id+'/_update'
+    #print(url_update)
+    #res1 = requests.get(url_update)
+    res1 = requests.post(url=url_update, data=data_upset, headers=headers)
+    print(res1.json())
+
+=======================================
+冷热分类，数据写入慢的话，就先写主分片，写完之后再写副本；
+优化性能，合理设计index，避免过大，不用的、老数据就冷热分类，或者关闭index（_close)。、
+ES集群的索引写入及查询速度主要依赖于磁盘的IO速度，冷热数据分离的关键为使用SSD磁盘存储数据。
+若全部使用SSD，成本过高，且存放冷数据较为浪费，因而使用普通SATA磁盘与SSD磁盘混搭，可做到资源充分利用，性能大幅提升的目标。
+
+所有搜索引擎都是对文章分词后，对关键词建立倒排索引的。查询时：去倒排索引里匹配、然后根据文档id去获取对应的文档，倒排索引像是一个二级索引，像华胜说的hbase二级索引一样。
+
+
+{
+                "range": {
+                    "@timestamp": {
+                        "gte": "2019-08-21",
+                        "lte": "2019-08-27",
+                        "format":"yyyy-MM-dd",
+                        "time_zone":"+08:00"
+                    }
+                }
+            }]
+python3 search整个列表：if line in list_res,如果list_res是复合格式的、如里面包含字典的，则就不行，最小单位的元素必须一样才能用in。应该用search, if re.search(line, str(list_res):  即可。但是可能会模糊匹配、不能精确匹配，如匹配IP，192.168.10.1，会配到到192.168.10.12 。！！！
+re.search(匹配模式，匹配字符串），后面的字符串如果是其他数据类型，可以用str转化。set不能转化复合格式的list，如list里面有dict。
+
+倒排索引，一般本身有了一个索引了，就是id，就像hbase一样（正向索引），但是要进行内容检索，就不方便，只能全表扫描，为了不这样子，就利用分词策略对“全文”进行拆分，生成一个关键词和文档（id）的映射表，当你根据关键词查询的时候，就可以根据映射关系找到文档id，然后根据文档id查到对应的文档，再根据评分原则（词频、逆文档词频等）排序。
+索引的过程：一个请求发到es某个节点，这个节点就是协调节点，把请求转发到对应的主或者副分片里，各个节点进行处理，处理完进行排序反馈给协调节点，协调节点统一处理后发给客户端。
+每个分片就是一个Lucene引擎，es增加对Lucene了分布式和restful的api，所有的操作可以通过rest，通过http请求就可以，很方便，变得更好用。
+有很多种分词器，常见的就是standard和英文，可以单独安装设置，不过感觉日志分析的时候，一般也不需要。
+尽量不要用通配符和正则表达式，资源消耗太大。
+为了优化性能，要合理设置index，不能过大、不能过多，常见的做法是按照日期来设置，当io压力大的时候，可以先写主分片，完成之后才写副本。  数据冷热分离，ssd和普通磁盘。
+还有一个方式，就是不常用的index可以关闭，也可以提升性能。用的时候再post index/_open
+很多字段看情况，es分为数字、日期、字符串（text、keyword）和日期，其中字符串根据实际情况去看，不需要分词的就不分词，可以提升效率、节省空间。不用分词的也一样建立倒排索引。
+=============
+网上很多讲解索引的文章对索引的描述是这样的「索引就像书的目录， 通过书的目录就准确的定位到了书籍具体的内容」，这句话描述的非常正确， 但就像脱了裤子放屁，说了跟没说一样，通过目录查找书的内容自然是要比一页一页的翻书找来的快，同样使用的索引的人难到会不知道，通过索引定位到数据比直接一条一条的查询来的快，不然他们为什么要建索引。
+
+索引是对数据库表中一个或多个列（例如，employee 表的姓名 (name) 列）的值进行排序的结构。
+
+例如这样一个查询：select * from table1 where id=10000。如果没有索引，必须遍历整个表，直到ID等于10000的这一行被找到为止（也可以是所有等1w的行，主键又得是唯一的，否则冗余，第三范式；重复也可以建索引）；有了索引之后(必须是在ID这一列上建立的索引)，即可在索引中查找。由于索引是经过某种算法优化过的，因而查找次数要少的多。可见，索引是用来定位的。
+
+=================
+
+倒排索引常驻内存？
+倒过来的索引 倒排索引。正向只有一个索引，id、内容，反过来就很多了，所有关键词、id。————————目录（索引、ID）、内容，正向索引；内容的关键词、目录（索引、ID）
+文章id，中共中央国务院关于支持深圳建设中国特色社会主义先行示范区的意见》————深圳、示范区、建设
+倒排的优缺点和正排的优缺点整好相反。倒排在构建索引的时候较为耗时且维护成本较高，但是搜索耗时短。————根据索引（id）可以快速检索内容，而倒排的可以根据内容的关键词快速检索到id、然后根据id再找到实际的内容。
+
+双引号内不用加反斜杠
+
+单引号内必须加反斜杠
+
+三单引号输入换行需要加单引号
+
+三双引号最为完美，换行转义什么都不用加
+
+设计优化
+按天设置索引，合理设置字段、分片、副本数量。能keyword就设置keyword（防止索引多到爆炸--终于有人把es原理说透,学生、老师的对话）。
+写入优化：只写主分片。禁用刷新机制；   	写入过程使用bulk批量操作。	写入后，再写副本，恢复刷新间隔
+查询优化
+禁用wildcard、正则表达式，充分利用倒排索引禁止，能用filter就不用match
+其他优化
+部署、磁盘、ssd、网络、cpu、内存。
+
+
+master选举机制，有点复杂。没明白。
+
+基于Lucene的分布式搜索引擎。支持海量数据，用于日志分析，可以快速检索。
+ElasticSearch 是一个分布式、高扩展、高实时的搜索与数据分析引擎。它能很方便的使大量数据具有搜索、分析和探索的能力。充分利用ElasticSearch的水平伸缩性，能使数据在生产环境变得更有价值。ElasticSearch 的实现原理主要分为以下几个步骤，首先用户将数据提交到Elastic Search 数据库中，再通过分词控制器去将对应的语句分词，将其权重和分词结果一并存入数据，当用户搜索数据时候，再根据权重将结果排名，打分，再将返回结果呈现给用户。
+Elasticsearch可以用于搜索各种文档。它提供可扩展的搜索，具有接近实时的搜索，并支持多租户。
+
+https://elasticsearch.cn/question/2935 感觉from size和scroll没区别啊？
+ES的搜索是分2个阶段进行的，即Query阶段和Fetch阶段。  Query阶段比较轻量级，通过查询倒排索引，获取满足查询结果的文档ID列表。  而Fetch阶段比较重，需要将每个shard的结果取回，在协调结点进行全局排序。  通过From+size这种方式分批获取数据的时候，随着from加大，需要全局排序并丢弃的结果数量随之上升，性能越来越差。
+ 
+而Scroll查询，先做轻量级的Query阶段以后，免去了繁重的全局排序过程。 它只是将查询结果集，也就是doc id列表保留在一个上下文里， 之后每次分批取回的时候，只需根据设置的size，在每个shard内部按照一定顺序（默认doc_id续)， 取回这个size数量的文档即可。 
+关于用法，这个写的好：https://www.jianshu.com/p/f4d322415d29	可以把 scroll 理解爲关系型数据库里的 cursor，因此，scroll 并不适合用来做实时搜索（核心区别！！！），而更适用于后台批处理任务，比如群发。scroll 具体分爲初始化和遍历两步
+初始化时将所有符合搜索条件的搜索结果缓存起来，可以想象成快照
+在遍历时，从这个快照里取数据
+也就是说，在初始化后对索引插入、删除、更新数据都不会影响遍历结果（重点区别！！！！）。	游标可以增加性能的原因，是因为如果做深分页，每次搜索都必须重新排序，非常浪费，使用scroll就是一次把要用的数据都排完了，分批取出，因此比使用from+size还好。
+使用初始化返回的_scroll_id来进行请求，每一次请求都会继续返回初始化中未读完数据，并且会返回一个_scroll_id，这个_scroll_id可能会改变，因此每一次请求应该带上上一次请求返回的_scroll_id
+
+ 
+由此也可以看出scroll不适合支持那种实时的和用户交互的前端分页工作，其主要用途用于从ES集群分批拉取大量结果集的情况，一般都是offline的应用场景。  比如需要将非常大的结果集拉取出来，存放到其他系统处理，或者需要做大索引的reindex等等。
+
+
+SDL的目标主要是两个，增强安全性和降低成本。某种意义上，如果将“增强安全性”当作必须满足的要求，那么降低成本就成了SDL的唯一目标了。这里的成本主要是漏洞修复成本。
+使用scroll实现Elasticsearch数据遍历和深度分页
+
+
+不同的索引，id可能相同，不能不指定索引、只指定id来执行update。
+
+ 51 data_upset = {
+ 52   "doc": {"warning_rank": "3", "warning_event": "file download"}
+ 53   }
+ 54 data_upset = json.dumps(data_upset)
+ 55 for i in list_index:
+ 56     _id = parse.quote_plus(i['_id'])
+ 57     url_update = 'http://127.0.0.1:9200/mysql-log-fort_log-2019.*/doc/'    #这样就不行。
+
+===========================================
+高防包主要针对34层的攻击，要想包括7层的，就升级为高防IP。针对7层的用waf也可以做一些。
+鉴于DDoS防护包产品的架构限制，在某些特定情况下，DDoS防护包提供的安全防护能力可能无法完全满足您的DDoS防护需求。如果DDoS防护包已无法满足您的安全防护需求，建议您切换至DDoS高防IP服务提升安全防护能力。
+如果您已购买DDoS防护包实例，在实际使用过程中遇到以下问题，可以将已购买的DDoS防护包升级为DDoS高防IP服务：
+遭受的DDoS攻击持续时间较长，因此大量消耗抗D流量包的防护流量导致防御成本较高。
+防护的业务遭受CC攻击，而对此类攻击DDoS防护包无法防御。
+
+================风险评估规范
+自己制定一个风险矩阵，确定等级；参照表
+
+风险等级	威胁等级	1	2	3	4	5
+	脆弱性等级	1	2	3	4	5	1	2	3	4	5	1	2	3	4	5	1	2	3	4	5	1	2	3	4	5
+资产价值等级	1	1	1	1	1	1	1	1	1	1	1	1	1	1	2	2	1	1	2	2	2	1	1	2	2	2
+	2	1	1	1	1	1	1	1	2	2	2	1	2	2	2	2	1	2	2	3	3	1	2	2	3	3
+	3	1	1	1	2	2	1	2	2	2	2	1	2	2	3	3	2	2	3	3	3	2	2	3	3	4
+	4	1	1	2	2	2	1	2	2	3	3	2	2	3	3	3	2	3	3	4	4	2	3	3	4	5
+	5	1	1	2	2	2	1	2	2	3	3	2	2	3	3	4	2	3	3	4	5	2	3	4	5	5
