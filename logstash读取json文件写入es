@@ -1,0 +1,33 @@
+input{
+    file {
+        path => ["/opt/log/*log"]
+        type => "audit"
+        start_position => "beginning"
+        codec => json {
+                charset => "ISO-8859-1"
+      }
+    }
+}
+
+filter {
+  date {
+    match => ["log_update_time", "yyyy-MM-dd HH:mm:ss"]
+    target => "@timestamp"
+   }
+  fingerprint{
+        source => ["log_update_time","log_cmd","log_operator"]
+        target => "[@metadata][fingerprint]"
+        method => "SHA1"
+        key => "Log analytics"
+        base64encode => true
+        concatenate_sources => true
+   }
+}
+
+output {
+    elasticsearch {
+        hosts => ["localhost:9200"]
+        index => "yk-log-%{type}-%{+YYYY.MM}"
+        document_id => "%{[@metadata][fingerprint]}"
+    }
+}
