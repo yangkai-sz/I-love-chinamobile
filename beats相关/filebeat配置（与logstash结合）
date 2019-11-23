@@ -35,10 +35,14 @@ input {
 启动logstash，启动filebeat：./filebeat -e -c ./filebeat.yml
 测试：文件可以正常写入es、正常在kibana上展示。
 都是beat比logstash轻量级，那我就看看：
+
 [root@localhost log]# ps aux |grep logstash
 es         5946 11.2（cpu占比） 37.8 （内存占比）
+
 
 [es@bogon es]$ ps aux |grep filebeat
 es        13480  0.0（cpu占比）  1.0 （内存占比）
 
+
 对比结果很明显！！！
+GitHub不会用，格式好乱。。。。
