@@ -41,4 +41,4 @@ es         5946 11.2（cpu占比） 37.8 （内存占比）
 [es@bogon es]$ ps aux |grep filebeat
 es        13480  0.0（cpu占比）  1.0 （内存占比）
 
-对比结果很明显
+对比结果很明显！！！
