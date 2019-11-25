@@ -1,0 +1,36 @@
+json文件可以直接读取、写入es，额外注意的需要加入一个时间戳，日志必备的。
+
+
+input{
+    file {
+        path => ["/opt/*format.log"]
+        type => "fort_log"
+        start_position => "beginning"
+        codec => json {
+                charset => "ISO-8859-1"
+      }
+    }
+}
+
+filter {
+  date {
+    match => ["log_time", "yyyy-MM-dd HH:mm:ss"]
+    target => "@timestamp"
+   }
+  fingerprint{
+        source => ["log_time","log_cmd","log_operator","log_daddr","log_saddr","warning_event"]
+        target => "[@metadata][fingerprint]"
+        method => "SHA1"
+        key => "Log analytics"
+        base64encode => true
+        concatenate_sources => true
+   }
+}
+
+output {
+    elasticsearch {
+        hosts => ["localhost:9200"]
+        index => "mysql-log-%{type}-%{+YYYY.MM}"
+        document_id => "%{[@metadata][fingerprint]}"
+    }
+}
