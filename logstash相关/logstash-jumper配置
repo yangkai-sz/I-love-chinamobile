@@ -1,11 +1,11 @@
 logstash的配置，支持正则，还可以切割，还支持正则表达式（太麻烦了、性能也不好），这里写得应该算最权威的，但是有些内容不够详细：https://elkguide.elasticsearch.cn/logstash/
 要切割字符串：
-[4408 4259 11091180 2019-07-24 16:15:02.890943 info]: cmdb认证成功！
-[4408 4259 11091180 2019-07-24 16:19:12.863832 info]: username:张三 client: asset:110.12.2.26 cmd:free -h
+[4408 4259 110 2019-07-24 16:15:02.890943 info]: cmdb认证成功！
+[4408 4259 110 2019-07-24 16:19:12.863832 info]: username:张三 client: asset:110.12.21.26 cmd:free -h
 
-[3201 2665 11090991 2019-07-24 16:22:35.526148 info]: username:张三 client: asset:110.30.6.10 cmd:mesug_2.1.0&keyword=大道争"
+[3201 2665 111 2019-07-24 16:22:35.526148 info]: username:张三 client: asset:110.30.6.110 cmd:mesug_2.1.0&keyword=大道争"
 
-[3201 2665 11090991 2019-07-24 16:23:01.587848 info]: username:张三 client: asset:110.30.6.10 cmd:ug_2.1.0&keyword=qq"12
+[3201 2665 111 2019-07-24 16:23:01.587848 info]: username:张三 client: asset:110.30.6.110 cmd:ug_2.1.0&keyword=qq"12
 
 
 input {
@@ -164,7 +164,7 @@ filter {
 output {
     elasticsearch {
         hosts => ["192.2.126.141:9200"]
-        index => "jumper-log-%{type}-%{+YYYY.MM}"
+        index => "jumper-log-%{+YYYY.MM}"
         document_id => "%{[@metadata][fingerprint]}"
     }
 }
