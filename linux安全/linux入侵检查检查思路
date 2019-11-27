@@ -1,4 +1,4 @@
-参考资料：
+#参考资料：
 https://www.freebuf.com/articles/system/218407.html                     最全Linux应急响应技巧
 https://blog.csdn.net/weixin_42615308/article/details/88848666          /proc/{id}/目录详解
 
@@ -7,17 +7,35 @@ https://blog.csdn.net/weixin_42615308/article/details/88848666          /proc/{i
 
 
 
-检查思路：
+#检查思路：
 1、top、ps aux、ps -ef，检查使用cpu、内存使用率，异常的进程名字
 2、通过第一步，找到进程id之后，使用lsof -p ID，找到守护进程和命令；
-3、与第二步并行，去/proc/{id}/这个目录，去检查exe（命令链接）、comm（进程命令）、cmdline（完整命令信息）、cwd文件。
+3、与第二步并行，去/proc/{id}/这个目录，去检查exe（命令链接）、comm（进程命令）、cmdline（完整命令信息）、cwd文件；
+  检查lastlog，登陆历史、操作历史，异常文件（最近7天增加的文件、777权限的文件）；
+  lastb（lastb命令用于显示用户错误的登录列表，此指令可以发现系统的登录异常），
+  lastlog（最后一次登陆信息），
+  last（最近的登陆信息）。
 4、杀掉进程、通过2、3清除文件。
 5、检查crontab定时任务。
 6、是否被rootkit？有疑似痕迹，就重装系统。
 7、系统加固。
 8、横向排查。
 
-处理思路:
+#处理思路:
 1、隔离主机
 2、备份数据
 3、按照上述步骤排查。
+
+#linux日志解释：
+可以看到在/var/log目录下存在很多的日志文件，接下来就对里面的一些常用日志文件进行分析
+主要日志文件介绍：
+内核及公共消息日志:/var/log/messages
+计划任务日志：/var/log/cron
+系统引导日志：/var/log/dmesg
+邮件系统日志:/var/log/maillog
+用户登录日志：/var/log/lastlog
+/var/log/boot.log（记录系统在引导过程中发生的时间）
+/var/log/secure (用户验证相关的安全性事件)
+/var/log/wtmp(当前登录用户详细信息)
+/var/log/btmp（记录失败的的记录）
+/var/run/utmp（用户登录、注销及系统开、关等事件）
