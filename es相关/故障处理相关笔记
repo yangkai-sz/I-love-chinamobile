@@ -1,0 +1,9 @@
+问题1：logstash日志有报错：
+
+[logstash.outputs.elasticsearch] retrying failed action with response code: 403 ({"type"=>"cluster_block_exception", "reason"=>"blocked by: [FORBIDDEN/12/index read-only / allow delete (api)];"})
+
+通过网上检查，https://www.aityp.com/%E8%A7%A3%E5%86%B3elasticsearch%E7%B4%A2%E5%BC%95%E5%8F%AA%E8%AF%BB/
+确实是因为磁盘空间超过95%了。
+也按照这个操作执行了：
+curl -XPUT -H 'Content-Type: application/json' http://localhost:9200/_all/_settings -d '{"index.blocks.read_only_allow_delete": null}'
+
