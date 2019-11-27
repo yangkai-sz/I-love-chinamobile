@@ -1,0 +1,23 @@
+参考资料：
+https://www.freebuf.com/articles/system/218407.html                     最全Linux应急响应技巧
+https://blog.csdn.net/weixin_42615308/article/details/88848666          /proc/{id}/目录详解
+
+
+处理Linux应急响应主要分为这4个环节:识别现象-> 清除病毒-> 闭环兜底-> 系统加固。
+
+
+
+检查思路：
+1、top、ps aux、ps -ef，检查使用cpu、内存使用率，异常的进程名字
+2、通过第一步，找到进程id之后，使用lsof -p ID，找到守护进程和命令；
+3、与第二步并行，去/proc/{id}/这个目录，去检查exe（命令链接）、comm（进程命令）、cmdline（完整命令信息）、cwd文件。
+4、杀掉进程、通过2、3清除文件。
+5、检查crontab定时任务。
+6、是否被rootkit？有疑似痕迹，就重装系统。
+7、系统加固。
+8、横向排查。
+
+处理思路:
+1、隔离主机
+2、备份数据
+3、按照上述步骤排查。
