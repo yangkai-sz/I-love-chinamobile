@@ -42,4 +42,6 @@ http {
         #error_page  404              /404.html;
 
 
-
+# 日志样例
+110.101.181.223 - audit [03/Dec/2019:17:29:22 +0800] "POST /api/index_management/indices/reload HTTP/1.1" 200 559 "http://shell.xxx.com/app/kibana" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36" "192.168.209.22, 158.22.2.6""upstream_addr" "{\x22indexNames\x22:[\x22audit-paas-2019.12\x22,\x22audit-paas-2019.09\x22,\x22audit-paas-2019.07\x22,\x22audit-paas-2019.08\x22,\x22audit-paas-2019.10\x22,\x22audit-qizhi-fort_log-2019.06\x22,\x22audit-qizhi-fort_log-2019.09\x22,\x22audit-qizhi-fort_log-2019.08\x22,\x22audit-qizhi-fort_log-2019.10\x22,\x22audit-qizhi-fort_log-2019.07\x22]}"
+10.102.81.223 - audit [03/Dec/2019:17:29:48 +0800] "GET /api/saved_objects/_find?type=index-pattern&fields=title&per_page=10000 HTTP/1.1" 200 210 "http://shell.xxx.com/app/kibana" "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36" "192.168.209.22, 158.22.2.6""upstream_addr" "-"
