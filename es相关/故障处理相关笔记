@@ -1,4 +1,4 @@
-问题1：logstash日志有报错：
+# 问题1：logstash日志有报错（磁盘使用率超过95%）：
 
 [logstash.outputs.elasticsearch] retrying failed action with response code: 403 ({"type"=>"cluster_block_exception", "reason"=>"blocked by: [FORBIDDEN/12/index read-only / allow delete (api)];"})
 
@@ -6,4 +6,15 @@
 确实是因为磁盘空间超过95%了。
 也按照这个操作执行了：
 curl -XPUT -H 'Content-Type: application/json' http://localhost:9200/_all/_settings -d '{"index.blocks.read_only_allow_delete": null}'
+
+# 问题2：logstash无法写入数据，集群脑裂
+突然有一天很奇怪，通过kibana怎么都查不到当天、前一天的数据。集群是三个节点，我反复用logstash去测试，logstash日志也无异常（正常的解析日志貌似没有，
+只能看到启动成功了），用ftp把文件传到另外一个服务器上，再去执行logstash解析，还是一样，邪门了。数据是肯定没问题的，毕竟生成json文件的程序没动过。
+
+最后发现是一个节点脱离了集群，我通过kibana去看index，发现状态都是红色的！首先我执行了检查：
+* 看看3个es节点是不是服务都在；
+* 都在；执行get /_cat/nodes来查看集群状态，发现一个脱离了集群
+* 重启了一下那个脱离的集群，然后好了
+我怀疑是网络问题，导致发生了脑裂。没能在日志中验证，日志太多了。不太会分析。
+我查看了一下脱离集群的那个节点，发现上午反复进行测试的报错日志，都在es的日志里，而不是logstash里，卧槽了。。。。
 
