@@ -1,9 +1,9 @@
-# es是什么
+# 1、es是什么
 es是一个分布式的搜索引擎，也有人说是数据库。它能存数据，也可以分析，例如：avg、sum、count、max、min等（kibana，挺方便）。
 
-# 数据查询
+# 2、数据查询
 
-## 一般的query查询
+## 2.1、一般的query查询
 按照一般的查询流程来说，如果我想查询前10条数据：
 
 * 客户端请求发给某个节点
@@ -39,8 +39,8 @@ GET qizhi-2019/_search
   }
 }
 ```
-## scroll游标查询、分页
-### 查询语句
+## 2.2、scroll游标查询、分页
+### 2.2.1 查询语句
 ```
 curl -XGET "http://192.168.14.3:9399/ad_log/_search?pretty&scroll=5m" -H 'Content-Type: application/json' -d'
 {
@@ -73,7 +73,7 @@ curl -XGET "http://192.168.14.3:9399/ad_log/_search?pretty&scroll=5m" -H 'Conten
 * 技巧：有的时候有2b把日志的时间字段设置成text类型，这个时候再用range的时间段查询时，就要加上.keyword 
 * 官方参考文档：https://www.elastic.co/guide/cn/elasticsearch/guide/current/scroll.html
 
-### 分页查询：
+### 2.2.1 分页查询：
 ```
 curl -XGET "http://192.168.14.3:9399/_search?pretty&scroll=5m" -H 'Content-Type: application/json' -d'
 {
