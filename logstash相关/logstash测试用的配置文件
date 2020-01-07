@@ -1,0 +1,17 @@
+这个是最精简的，连filter都没有：
+input {
+    stdin {
+        tags => ["add"]
+        type => "std"
+    }
+}
+output {
+    stdout {
+    }
+}
+输出直接打印当前屏幕。作用就是测试自己写得filter是否正确。
+tags、type是默认的两个字段，可以用来区分输入来源。
+
+filebeat里也有个type的配置字段，简历写这个主机的ip，用来区分。
+
+个人喜欢用if、mutate来处理字段。
