@@ -93,3 +93,42 @@ curl -XPOST "http://ip:9993/audit-qizhi-fort_log-2019.12/_search?pretty&scroll=5
 }'
 ```
 
+另外一个，日志查询的，谛听的操作的用户统计group by：
+同时用到了size，agg，query：
+```
+curl -XPOST 'http://IP:9902/admin_log/_search' -d {
+	"size": 0,
+	"aggs": {
+		"yk": {
+			"terms": {
+				"field": "userId.keyword",
+				"size": 10,
+				"order": {
+					"_count": "desc"
+				}
+			}
+		}
+	},
+	"query": {
+		"bool": {
+			"must": [
+				{
+					"match": {
+						"appName.keyword": "diting-console"
+					}
+				},
+				{
+					"range": {
+						"time.keyword": {
+							"gte": "2020-01-01",
+							"lte": "2020-01-20",
+							"format": "yyyy-MM-dd"
+						}
+					}
+				}
+			]
+		}
+	}
+}
+```
+这里面的time是text类型，不是date，所以用了time.keyword，text类型也可以比较，开始以为不可以的。
