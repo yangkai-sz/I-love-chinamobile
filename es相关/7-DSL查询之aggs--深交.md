@@ -46,9 +46,35 @@ curl -XGET "http:///vssh--2020.01/_search" -H 'Content-Type: application/json' -
 ```
 
 ## 1.3 特别注意
-count、cardinality上执行的字段，不需要是数字，普通text字段就行了。但是avg、mix、max，就需要在数字上执行了，跟sql语句是一样的道理，居然都忘记了。。。
+count、cardinality上执行的字段，不需要是数字，普通text字段就行了。但是avg、mix、max，就需要在数字、日期上执行了，跟sql语句是一样的道理，居然都忘记了。。。
 
-## 一般aggs要根query配合着用
+例如：
+```
+{
+  "aggs": {
+    "2": {
+      "terms": {
+        "field": "beat.hostname.keyword",
+        "size": 99,
+        "order": {
+          "1": "desc"
+        }
+      },
+      "aggs": {
+        "1": {
+          "max": {
+            "field": "@timestamp"
+          }
+        }
+      }
+    }
+  }
+```
+效果是：
+以beat.hostname为分组，统计每个beat.hostname最新（最后）上报日志的时间。这个是vssh日志采集的索引。max用在了时间字段上，group by的另外一种用法。
+第二个aggs是跟上面的terms是一个层级的，它相当于是嵌套到里面的。
+
+## 1.4 一般aggs要根query配合着用
 一般aggs要跟query配合着用才符合日常需要，至少在时间段上选择吧，不可能查所有的数据。格式就是：
 ```
 {
@@ -63,7 +89,7 @@ https://www.cnblogs.com/xing901022/p/4944043.html
 
 # 2、感觉会用这几个就够了吧。。。。之前我觉得会用query就够了。。。
 
-补充一个复杂一点的query，游标scollL：
+## 补充一个复杂一点的query，游标scollL：
 ```
 curl -XPOST "http://ip:9993/audit-qizhi-fort_log-2019.12/_search?pretty&scroll=5m" -H 'Content-Type: application/json' -d'
 {
@@ -93,10 +119,11 @@ curl -XPOST "http://ip:9993/audit-qizhi-fort_log-2019.12/_search?pretty&scroll=5
 }'
 ```
 
-另外一个，日志查询的，谛听的操作的用户统计group by：
-同时用到了size，agg，query：
+## 同时用到了size，agg，query的查询
+ 另外一个，日志查询的，谛听的操作的用户统计group by：
+
 ```
-curl -XPOST 'http://IP:9902/admin_log/_search' -d {
+{
 	"size": 0,
 	"aggs": {
 		"yk": {
