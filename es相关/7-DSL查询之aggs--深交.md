@@ -72,7 +72,16 @@ count、cardinality上执行的字段，不需要是数字，普通text字段就
 ```
 效果是：
 以beat.hostname为分组，统计每个beat.hostname最新（最后）上报日志的时间。这个是vssh日志采集的索引。max用在了时间字段上，group by的另外一种用法。
-第二个aggs是跟上面的terms是一个层级的，它相当于是嵌套到里面的。
+第二个aggs是跟上面的terms是一个层级的，它相当于是嵌套到里面的。效果实例：
+```
+一共两列，第一列为hostname，第二列为最大的日期，倒序：
+
+beat.name.keyword:Descending 			Max @timestamp 
+spid-plan1					2020-01-20, 19:47:12.597
+spid-plan2					2020-01-20, 19:47:12.597
+依次排列
+ 	 
+```
 
 ## 1.4 一般aggs要根query配合着用
 一般aggs要跟query配合着用才符合日常需要，至少在时间段上选择吧，不可能查所有的数据。格式就是：
@@ -89,7 +98,7 @@ https://www.cnblogs.com/xing901022/p/4944043.html
 
 # 2、感觉会用这几个就够了吧。。。。之前我觉得会用query就够了。。。
 
-## 补充一个复杂一点的query，游标scollL：
+## 2.1 补充一个复杂一点的query，游标scollL：
 ```
 curl -XPOST "http://ip:9993/audit-qizhi-fort_log-2019.12/_search?pretty&scroll=5m" -H 'Content-Type: application/json' -d'
 {
@@ -119,7 +128,7 @@ curl -XPOST "http://ip:9993/audit-qizhi-fort_log-2019.12/_search?pretty&scroll=5
 }'
 ```
 
-## 同时用到了size，agg，query的查询
+## 2.2 同时用到了size，agg，query的查询
  另外一个，日志查询的，谛听的操作的用户统计group by：
 
 ```
