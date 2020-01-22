@@ -76,7 +76,7 @@ count、cardinality上执行的字段，不需要是数字，普通text字段就
 ```
 一共两列，第一列为hostname，第二列为最大的日期，倒序：
 
-beat.name.keyword:Descending 			Max @timestamp 
+beat.hostname.keyword:Descending 			Max @timestamp 
 spid-plan1					2020-01-20, 19:47:12.597
 spid-plan2					2020-01-20, 19:47:12.597
 依次排列
@@ -93,9 +93,17 @@ spid-plan2					2020-01-20, 19:47:12.597
 ```
 可以再穿插 size、_source、from之类的字段。
 
+## 1.5 aggs查下中的field，用使用xxx.keyword的才行
 ## 这篇写的真不错，至少我看懂了，这个才最重要!
 https://www.cnblogs.com/xing901022/p/4944043.html
-
+```
+{
+    "size":0,
+    "aggs" : {
+        "max_price" : { "max" : { "field" : "price" } }
+    }
+}
+```
 # 2、感觉会用这几个就够了吧。。。。之前我觉得会用query就够了。。。
 
 ## 2.1 补充一个复杂一点的query，游标scollL：
