@@ -189,7 +189,7 @@ curl -XPOST "http://ip:9993/audit-qizhi-fort_log-2019.12/_search?pretty&scroll=5
   "aggs": {
     "2": {
       "terms": {
-        "field": "beat.name.keyword",
+        "field": "beat.hostname.keyword",
         "size": 99,
         "order": {
           "_count": "desc"
@@ -231,3 +231,4 @@ curl -XPOST "http://ip:9993/audit-qizhi-fort_log-2019.12/_search?pretty&scroll=5
   }
 }
 ```
+注意一下最后query中的must、filter、should、must_not的用法。
