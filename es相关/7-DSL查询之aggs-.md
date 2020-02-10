@@ -33,7 +33,7 @@ curl -XGET "http://ip:9993/vssh--2020.01/_search" -H 'Content-Type: application/
   }
 }'
 ```
-以beat.hostname.keyword进行分组，然后count，倒序排列。
+以beat.hostname.keyword进行分组，然后count，倒序排列。 
 ## 1.2 count的话，直接这样就可以了:
 ```
 curl -XGET "http:///vssh--2020.01/_search" -H 'Content-Type: application/json' -d'
