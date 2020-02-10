@@ -1,8 +1,4 @@
 # 1、背景
-某2b公司，让统计es中已接入设备的数量，写命令（语句）。
-想到distinct用法，但是一直想不起来es里咋写了，又好像es没有这用法，就想到了es里的类似group by的用法，通过曲线救国的方式，也可以实现查询。
-如果依赖kibana，操作起来就很方便，但是这个2b让你默写。。。
-上网查也没看明白，继续在kibana上摸索，发现了这个用法其实是：cardinality 靠你奶了个腿啊，废话不说了，上内容：
 ```
 curl -XGET "http:///vssh--2020.01/_search" -H 'Content-Type: application/json' -d'
 {
