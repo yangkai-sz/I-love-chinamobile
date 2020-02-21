@@ -1,0 +1,13 @@
+2020-02-21 学习一下hdfs
+hdfs，分布式文件存储、廉价存储、高吞吐量、容错，大量文件、大文件，tb、pb级存储。
+
+https://blog.csdn.net/sjmz30071360/article/details/79877846   ---什么是hdfs
+
+
+https://hadoop.apache.org/docs/r1.0.4/cn/hdfs_design.html  ---官网文档
+
+https://blog.csdn.net/apriaaaa/article/details/93207271   ---hdfs操作指令，跟linux一般命令操作很像。
+
+https://www.jianshu.com/p/58b39974abb7。--跟下面的是同一个，下面的是转载的，我参考下面的搭建的。
+https://blog.csdn.net/qq_35246620/article/details/88576800
+https://blog.csdn.net/wanbf123/article/details/81948026 ---这个用了zookeeper搭建的hdfs
