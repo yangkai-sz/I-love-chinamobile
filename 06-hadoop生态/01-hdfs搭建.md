@@ -12,7 +12,7 @@ https://blog.csdn.net/apriaaaa/article/details/93207271   ---hdfs操作指令，
 https://www.jianshu.com/p/58b39974abb7。--跟下面的是同一个，下面的是转载的，我参考下面的搭建的。
 https://blog.csdn.net/qq_35246620/article/details/88576800
 https://blog.csdn.net/wanbf123/article/details/81948026 ---这个用了zookeeper搭建的hdfs
-===========
+
 # 2、那什么是hadoop呢？
 hadoop中有3个核心组件：
 
