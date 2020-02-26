@@ -40,7 +40,8 @@ for result in nm.scan('172.25.209.22', ports=None, arguments="-sS"):
     print(result)
  ```
  ### 输出结果：
-`('172.25.209.22',
+```
+('172.25.209.22',
 {
   'nmap': {
     'command_line': '"C:/Program Files (x86)/Nmap/nmap.exe" -oX - -sS 172.25.209.22',
@@ -160,7 +161,8 @@ for result in nm.scan('172.25.209.22', ports=None, arguments="-sS"):
       }
     }
   }
-})`
+})
+```
 ### 使用nmap单独扫描的结果：
 ```
 Starting Nmap 7.80 ( https://nmap.org ) at 2020-02-25 20:51 China Standard Time
