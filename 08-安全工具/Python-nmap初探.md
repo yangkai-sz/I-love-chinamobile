@@ -1,5 +1,5 @@
 # 1、Python-nmap是什么
-
+Python的一个第三方模块，完美集成、调用nmap，使用起来更方方便。
 # 2、环境搭建
 1、安装nmap  <br>
 2、安装python-nmap库
@@ -28,7 +28,125 @@ print(res1)
 ip作为参数传递，函数好好封装一下，以方便调用。
 ## 3.2 PortScannerAsync()异步扫描，怎么搞都失败
 可能是我window的问题，linux懒得测试了。
+###########
+经过2020-02-26的测试，确实是我Windows环境的问题，在linux上下载了Python-nmap.tar.gz，安装之后，执行下面的程序就可以了，扫描的是本机（安装的有hadoop也启动了，es没启动）自己：
+```
+import nmap
 
+
+def callback_result(host, scan_result):
+    print('------------------')
+    print(host, scan_result)
+
+
+# 异步Scanner
+nm = nmap.PortScannerAsync()
+
+# 扫描参数，第一个是扫描对象，可以是单个IP、网段、IP-IP诸多写法，详细自己查手册或者百度
+# 第二个是ports参数，同样写法多样
+# 第三个arguments参数，这个就有讲究了，假如不写这个参数，默认会带一个-sV，然后你扫描一个ip都能等到天荒地老，关于-sV的含义在文后给出作为参考。在这里，我们给一个-sS，或者可以给个空白字符串也是可以的
+# 第四个是指定回调函数
+nm.scan('192.168.10.128', ports=None, arguments='-sV', callback=callback_result)
+
+# 以下是必须写的，否则你会看到一运行就退出，没有任何的结果
+while nm.still_scanning():
+    print("sleep")
+    nm.wait(2)
+```
+其实回调函数上面的也没有搞的太清楚。
+### 输出结果内容很详细，带有指纹信息：
+```
+{
+  'nmap': {
+    'command_line': 'nmap -oX - -sV 192.168.10.128',
+    'scaninfo': {
+      'tcp': {
+        'method': 'syn',
+        'services': '1,3-4,6-...胜利。。。65129,65389'
+      }
+    },
+    'scanstats': {
+      'timestr': 'Wed Feb 26 17:34:30 2020',
+      'elapsed': '19.20',
+      'uphosts': '1',
+      'downhosts': '0',
+      'totalhosts': '1'
+    }
+  },
+  'scan': {
+    '192.168.10.128': {
+      'hostnames': [
+        {
+          'name': 'master',
+          'type': 'PTR'
+        }
+      ],
+      'addresses': {
+        'ipv4': '192.168.10.128'
+      },
+      'vendor': {
+        
+      },
+      'status': {
+        'state': 'up',
+        'reason': 'localhost-response'
+      },
+      'tcp': {
+        22: {
+          'state': 'open',
+          'reason': 'syn-ack',
+          'name': 'ssh',
+          'product': 'OpenSSH',
+          'version': '7.4',
+          'extrainfo': 'protocol 2.0',
+          'conf': '10',
+          'cpe': 'cpe:/a:openbsd:openssh:7.4'
+        },
+        111: {
+          'state': 'open',
+          'reason': 'syn-ack',
+          'name': 'rpcbind',
+          'product': '',
+          'version': '2-4',
+          'extrainfo': 'RPC #100000',
+          'conf': '10',
+          'cpe': ''
+        },
+        8031: {
+          'state': 'open',
+          'reason': 'syn-ack',
+          'name': 'unknown',
+          'product': '',
+          'version': '',
+          'extrainfo': '',
+          'conf': '3',
+          'cpe': ''
+        },
+        8088: {
+          'state': 'open',
+          'reason': 'syn-ack',
+          'name': 'http',
+          'product': 'Jetty',
+          'version': '',
+          'extrainfo': '',
+          'conf': '10',
+          'cpe': 'cpe:/a:mortbay:jetty'
+        },
+        9000: {
+          'state': 'open',
+          'reason': 'syn-ack',
+          'name': 'cslistener',
+          'product': '',
+          'version': '',
+          'extrainfo': '',
+          'conf': '3',
+          'cpe': ''
+        }
+      }
+    }
+  }
+}
+```
 ## 3.3 PortScannerYield()异步扫描、迭代器
 最后返回了一个迭代器，代码简单，使用方便。源代码背后用的是多线程的思想。
 
