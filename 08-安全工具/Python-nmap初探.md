@@ -11,7 +11,8 @@
 
 ## 3.1 PortScanner()普通扫描
 这个就是常规的普通扫描：
-`import nmap
+```
+import nmap
 nm = nmap.PortScanner()
 #nm.scan('192.168.10.10-100', ports=None, '22,21','-sV')
 
@@ -22,7 +23,7 @@ res1 = nm.scan(hosts='172.25.209.22', ports='3389,145,11', arguments='-sV')
 #res2 = nm.scaninfo() #--返回扫描的信息，没啥用
 #res = nm.get_nmap_last_output() --可以的，返回的信息比较多（2）
 print(res1)
-`
+```
 
 ip作为参数传递，函数好好封装一下，以方便调用。
 ## 3.2 PortScannerAsync()异步扫描，怎么搞都失败
@@ -32,11 +33,12 @@ ip作为参数传递，函数好好封装一下，以方便调用。
 最后返回了一个迭代器，代码简单，使用方便。源代码背后用的是多线程的思想。
 
 这篇文章写的不错：https://blog.51cto.com/coosh/2129009
-`import nmap
+```
+import nmap
 nm = nmap.PortScannerYield()
 for result in nm.scan('172.25.209.22', ports=None, arguments="-sS"):
     print(result)
- `
+ ```
  ### 输出结果：
 `('172.25.209.22',
 {
