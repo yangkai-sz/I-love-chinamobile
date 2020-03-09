@@ -6,6 +6,8 @@ kafka是一个高吞吐量的消息中间件，常见用于流处理，分布式
 再过半小时，你就能明白kafka的工作原理了 https://www.cnblogs.com/sujing/p/10960832.html
 
 搭建的方法，参考这个就很好：https://blog.csdn.net/zxy987872674/article/details/72466504  Kafka集群搭建详细步骤
+---使用kafka自带的zookeeper，一般集群应该是奇数个，但也不会太多，例如3、5、7，在每个节点上启动zookeeper和kafka。
+
 测试的方法：https://blog.csdn.net/zxy987872674/article/details/72493128 标准输入输出 测试，
 接受报错的原因解释：https://blog.csdn.net/csdn_sunlighting/article/details/81516646
 0.90版本之后启动消费者的方法： bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test --from-beginning
@@ -17,7 +19,7 @@ OpenJDK 64-Bit Server VM warning: If the number of processors is expected to inc
 >nimabide
 >qishinidiele
 >我草你妈
->狗日的 深圳
+>狗日的 深圳房价
 >sha bi
 >qusiba
 >狗日的 玩意
@@ -27,7 +29,7 @@ OpenJDK 64-Bit Server VM warning: If the number of processors is expected to inc
 [es@localhost kafka_2.12-2.4.0]$ ./bin/kafka-console-consumer.sh --bootstrap-server 192.168.10.130:9092 --topic test --from-beginning
 OpenJDK 64-Bit Server VM warning: If the number of processors is expected to increase from one, then you should configure the number of parallel GC threads appropriately using -XX:ParallelGCThreads=N
 yangkai 2020 fuck shenzhen
-深圳
+深圳房价
 玩意
 nimabide
 我草你妈
@@ -37,3 +39,6 @@ qusiba
 [2020-01-10 19:34:35,204] 
 
 惊讶：kafka还有过滤关键字的能力？？？？
+
+---
+kafka streams怎么用，还没认真研究。
