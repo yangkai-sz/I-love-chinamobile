@@ -1,0 +1,68 @@
+思路：
+1、使用token访问GitHub的api接口，接口的使用方法可以看官方文档。
+2、应该搜公司的关键字，然后在去对方的仓库里搜索敏感信息，如username/passwd/py/sh/
+3、对于发现过的页面，就不再重复检查了，可把发现的页面url生成hash（md5），写入到文件或者数据库，下次搜索的时候判断一下是否在库里，如果不再，则记录。
+4、最终离不开人，毕竟误报多，人工需要确认，去对方仓库里找敏感信息（如 mysql AND 3306 AND passwd)，去看是否为本公司代码。
+---------------------------------------------
+import requests
+# from lxml import etree
+import json
+import time
+import datetime
+import hashlib
+from vchat_alarm import v_chat_aes as vchat
+
+
+class GetGithub(object):
+   
+    @staticmethod
+    def search_github(match_rule, md5_hitory, file_md):
+        url_es = 'http://110.112.162.15:9123/github/_doc'
+        get_time = (datetime.datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
+        shijian = get_time
+        # shijian = (datetime.datetime.now() + datetime.timedelta(hours=-8)).strftime('%Y-%m-%d %H:%M:%S')
+
+        aes = vchat.VChatAes()
+        headers = {'Content-type': 'application/json'}
+        url_vchat = 'http://vchat.xxx.xxx:8088/xter/develop/msg/send'
+        url_1 = 'https://api.github.com/search/code?q='+match_rule+'&access_token=0f4------caa7b878a974508'
+        res_size = requests.get(url=url_1)
+        dict_res_size = json.loads(res_size.text)
+        total_count = dict_res_size['total_count']
+        page_size = total_count//30 + 2
+        print(page_size)
+        for page in range(1, page_size):
+            url_2 = 'https://api.github.com/search/code?q=' + match_rule + '&access_token=0f4c34cc82---aa7b878a974508&page='+str(page)
+            print(url_2)
+            res = requests.get(url=url_2)
+            dict_res = json.loads(res.text)
+            # print(type(dict_res))
+            # print(dict_res["items"])
+            list_url = dict_res["items"]
+            print('sum:'+str(len(list_url)))
+
+            # file_md = open('d:/github1.txt', 'a+', encoding='utf-8')
+
+            for line in list_url:
+                url = line["html_url"]
+                # print(line["html_url"])
+                md5 = hashlib.md5(url.encode('utf8'))
+                md5 = md5.hexdigest()
+                if md5 not in md5_hitory:
+                    file_md.write(md5+'\n')
+                    print("发现触发告警文件: " + url)
+                    time.sleep(5)
+                    params = {'fromUserCode': 'ISxx', 'toUserCode': '11099155', 'chatType': 'TEXT',
+                              'msgText': url,
+                              'showFlag': 0}
+                    params_aes = aes.encrypt(json.dumps(params)).decode('UTF-8')
+                    data = {'account': 'Ixxx9', 'params': params_aes}
+                    response = requests.post(url_vchat, data=json.dumps(data), headers=headers)
+                    data_result = { "url": url, "alerm_type": "default",
+                                   "get_time": get_time, "shijian": shijian, "match_rule": match_rule}
+                    data_result = json.dumps(data_result)
+                    res_es = requests.post(url=url_es, data=data_result, headers=headers)
+                    # return url
+                else:
+                    print('发现重复的文件: ' + url)
+                    # return None
