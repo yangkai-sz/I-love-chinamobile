@@ -1,0 +1,69 @@
+import requests
+from lxml import etree
+import json
+import datetime
+headers = {
+    'Referer': 'https://github.com/',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:58.0) Gecko/20100101 Firefox/58.0',
+    'Host': 'github.com'
+}
+
+session = requests.session()
+
+r1 = session.get('https://github.com/login', headers=headers)
+html1 = etree.HTML(r1.text)
+authenticity_token = html1.xpath('//*[@id="login"]/form/input[2]/@value')
+print(authenticity_token)
+
+
+post_dict = {
+    'commit': 'Sign in',
+    'utf8': '✓',
+    'authenticity_token': authenticity_token,
+    'login': 'username',
+    'password' : 'paaswd'
+}
+
+r2 = session.post(
+    url = 'https://github.com/session',
+    headers = headers,
+    data = post_dict,
+)
+
+print('# ————————————————')
+
+# html_one = etree.parse(html3, etree.HTMLParser())
+#看属性！！！不要调用错了
+# html = etree.parse('d:/test.txt', etree.HTMLParser())
+def push_github(html_get):
+    result1 = html_get.xpath('//div[@class="f4 text-normal"]/a/text()')  #list
+    result2 = html_get.xpath('//div[@class="f4 text-normal"]/a/@href')   #list
+    headers_json = {"Content-Type": "application/json"}
+    url_es = 'http://192.168.10.128:9200/github/_doc'
+
+    for i in range(len(result1)):
+        # print(result1[i], result2[i])
+        get_time = (datetime.datetime.now()).strftime('%Y-%m-%d %H:%M:%S')
+        shijian = (datetime.datetime.now()+datetime.timedelta(hours=-8)).strftime('%Y-%m-%d %H:%M:%S')
+        url = "https://github.com"+result2[i]
+        url_content = requests.get(url=url, headers=headers_json)
+        url_content = url_content.text
+        data_result = {"file": result1[i], "url": url,"alerm_type":"default","get_time":get_time, "shijian":shijian, "content": url_content}
+        data_result = json.dumps(data_result)
+        # print(data_result)
+        res_es = requests.post(url=url_es, data=data_result, headers=headers_json)
+
+
+print('-----------------------')
+#  url_vivo = 'https://github.com/search?q=password+AND+vivo&type=Code'
+
+for page in range(1, 100):
+    url_vivo = "https://github.com/search?o=desc&p="+str(page)+"&q=vivo+AND+xyz&s=indexed&type=Code"
+    print(url_vivo)
+    res = session.get(url=url_vivo, headers=headers)
+    # print(type(res))
+    html_get = etree.HTML(res.text)
+    #etree.HTML():构造了一个XPath解析对象并对HTML文本进行自动修正。
+    #etree.tostring()：输出修正后的结果，类型是bytes
+    push_github(html_get)
+#使用正则表达式，只匹配那一行，然后写入。
