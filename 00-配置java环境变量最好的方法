@@ -1,0 +1,16 @@
+00-配置java环境变量最好的方法：
+
+1、去oracle官方下载jdk，一般用1.8，有时候用11，我的oracle密码，用一次、忘记一次，还好找回起来比较方便。
+2、上传至linux服务器，tar -xzvf jdk1.8.0_221.tar.gz
+3、修改/etc/profile，在最后增加：
+---------------------------
+JAVA_HOME=/opt/jdk1.8.0_221
+PATH=$JAVA_HOME/bin:$PATH
+CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+
+export PATH
+export JAVA_HOME
+export CLASSPTH
+----------------------
+
+如果是Windows的话，就上网查下。我个人比较喜欢用解压的安装方式，有时候linux默认的openjdk也可以满足需求。
