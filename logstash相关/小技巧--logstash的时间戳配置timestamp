@@ -1,0 +1,20 @@
+采集自研发堡垒机日志的时候遇到的问题：
+
+一般情况下，入职必须得有时间戳字段，而且在es中必须得是date类型，否则搜索很不方便，尤其是在kibana上。
+filebeat在采集日志的时候，都会带时间戳，但是他的是采集时间，未必是日志生成时间，在做审计的时候，我一般都会转化：
+filter {
+  date {
+    match => ["log_time", "yyyy-MM-dd HH:mm:ss"]
+    target => "@timestamp"
+   }
+  fingerprint{
+        source => ["log_time","log_cmd","log_operator","log_daddr","log_saddr","warning_event"]
+        target => "[@metadata][fingerprint]"
+        method => "SHA1"
+        key => "Log analytics"
+        base64encode => true
+        concatenate_sources => true
+   }
+}
+
+  match => ["log_time", "yyyy-MM-dd HH:mm:ss"]这里要根据实际情况来写，有的日期在格式是2020-03-20 17:25:06.411120，那么我的转化格式就应该是这样子的：match => ["log_time", "yyyy-MM-dd HH:mm:ss.SSSSSS"],否则，匹配不成功！！！
