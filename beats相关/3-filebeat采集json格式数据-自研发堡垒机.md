@@ -100,7 +100,7 @@ JSON parse error, original data now in message field {:error=>#<LogStash::Json::
 ```
 codec => "json"
 ```
-
+### 多看日志logstash的日志，有助于排障 ./logs/logstash-plain.log
 # 5、最终结果样例
 ## 成功解析json的情况
 ```
@@ -193,3 +193,7 @@ codec => "json"
   ]
 }
 ```
+# 6、其实还不对
+通过上面的两个json格式，发现其实还是不对的，（1）文档id没解析成功；（2）log_time和timestamp不同，说明没成功。我上面的那个搞法是基于纯文本的时间，用mutate分割来处理的情况，但是现在不是输入的直接就是json、也是按照json解析的，可以参考logstash最原始的配置的那个文件。
+
+那个if[log_time]这个条件都不成立了，所以后面的也不回执行。经过确认，确实好了，删除if相关的内容。
