@@ -1,0 +1,17 @@
+import re
+import os
+dir = 'D:/2020/06-态势感知/02-态势感知POC/test/'
+# input_file = input("请输入路径：")
+list_sec_key =['password', 'username']
+for file in os.listdir(dir):
+    dir_file = dir+file
+    print(dir_file)
+    with open(dir_file, 'r', encoding='utf-8',errors='ignore') as search_file:
+        for row in search_file:
+            row = row.strip('\n')
+            # print(search_file.readline())
+            if re.search(r'([0-9]{1,3}\.){3}[0-9]{1,3}', row):
+                print(dir_file, row)
+            for data_key in list_sec_key:
+                if re.search(data_key, row):
+                    print(dir_file, row)
